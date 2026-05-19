@@ -231,6 +231,11 @@
     </div>
 
     <div class="field">
+      <label for="apiUrl">API URL</label>
+      <input id="apiUrl" type="text" value="http://localhost:1234/v1/chat/completions" placeholder="https://openrouter.ai/api/v1/chat/completions">
+    </div>
+
+    <div class="field">
       <label for="apiKey">API key</label>
       <input id="apiKey" type="password" autocomplete="off" placeholder="Optional for LM Studio; required for OpenRouter">
     </div>
@@ -249,12 +254,10 @@
   </main>
 
   <script>
-    const API_BASE_URL = "http://localhost:1234/v1";
-    const API_URL = API_BASE_URL + "/chat/completions";
-
     const systemPromptEl = document.getElementById("systemPrompt");
     const promptFileEl = document.getElementById("promptFile");
     const modelNameEl = document.getElementById("modelName");
+    const apiUrlEl = document.getElementById("apiUrl");
     const runButton = document.getElementById("runButton");
     const downloadButton = document.getElementById("downloadButton");
     const statusEl = document.getElementById("status");
@@ -332,9 +335,20 @@
         .filter(line => line.length > 0);
     }
 
+    function getApiUrl() {
+      return apiUrlEl.value.trim() || "http://localhost:1234/v1/chat/completions";
+    }
+
+    function getModelsUrl() {
+      const apiUrl = getApiUrl();
+      return apiUrl.replace(/\/chat\/completions\/?$/, "/models");
+    }
+
     async function getModelCandidates(model) {
       try {
-        const response = await fetch(API_BASE_URL + "/models");
+        const response = await fetch(getModelsUrl(), {
+          headers: getRequestHeaders()
+        });
         if (!response.ok) {
           return [model];
         }
@@ -356,7 +370,7 @@
     }
 
     async function callModel(systemPrompt, input, model) {
-      const response = await fetch(API_URL, {
+      const response = await fetch(getApiUrl(), {
         method: "POST",
         headers: getRequestHeaders(),
         body: JSON.stringify({
@@ -391,7 +405,7 @@
     }
 
     async function callImageModel(userContent, model) {
-      const response = await fetch(API_URL, {
+      const response = await fetch(getApiUrl(), {
         method: "POST",
         headers: getRequestHeaders(),
         body: JSON.stringify({
